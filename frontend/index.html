@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Analytics Dashboard</title>
+    <meta name="description" content="AI-Powered Energy Consumption & Cost Prediction System">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3' },
+                        accent: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-white flex-shrink-0 hidden lg:flex flex-col">
+            <div class="p-6 flex items-center space-x-3">
+                <div class="h-10 w-10 bg-primary-600 rounded-xl flex items-center justify-center"><i
+                        class="fa-solid fa-bolt text-white text-lg"></i></div>
+                <span class="text-xl font-bold tracking-tight">EnergyAI</span>
+            </div>
+            <nav class="mt-4 px-3 space-y-1 flex-1">
+                <a href="#" onclick="showSection('overview')"
+                    class="nav-link active flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i><span>Overview</span>
+                </a>
+                <a href="#" onclick="showSection('analysis')"
+                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i class="fa-solid fa-building w-5 text-center"></i><span>Building Analysis</span>
+                </a>
+                <a href="#" onclick="showSection('trends')"
+                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i><span>Trends & Impact</span>
+                </a>
+                <a href="#" onclick="showSection('prediction')"
+                    class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center"></i><span>2026 Forecast</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main -->
+        <main class="flex-1 overflow-y-auto">
+            <header
+                class="bg-white/80 backdrop-blur-lg sticky top-0 z-30 border-b border-slate-200/60 px-6 lg:px-8 py-4 flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl lg:text-2xl font-bold text-slate-900">Energy Consumption & Cost Prediction</h1>
+                    <p class="text-xs lg:text-sm text-slate-500 mt-0.5">AI-Powered Electricity Forecasting · 32-Feature XGBoost Model</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm font-semibold text-slate-700" id="current-date"></span>
+                    <div class="h-9 w-9 bg-primary-100 rounded-full flex items-center justify-center text-primary-600">
+                        <i class="fa-solid fa-user text-sm"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-6 lg:p-8 space-y-8">
+
+                <!-- ===== OVERVIEW ===== -->
+                <div id="section-overview">
+                    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 animate-fade-in">
+                        <div
+                            class="kpi-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total
+                                        Consumption</p>
+                                    <h3 class="text-2xl font-extrabold text-slate-900 mt-2" id="kpi-consumption">--</h3>
+                                </div>
+                                <div class="p-2.5 bg-emerald-50 rounded-xl text-emerald-600"><i
+                                        class="fa-solid fa-plug"></i></div>
+                            </div>
+                        </div>
+                        <div
+                            class="kpi-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Avg Power
+                                        Factor</p>
+                                    <h3 class="text-2xl font-extrabold text-slate-900 mt-2" id="kpi-pf">--</h3>
+                                </div>
+                                <div class="p-2.5 bg-blue-50 rounded-xl text-blue-600"><i
+                                        class="fa-solid fa-wave-square"></i></div>
+                            </div>
+                        </div>
+                        <div
+                            class="kpi-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Max Demand
+                                    </p>
+                                    <h3 class="text-2xl font-extrabold text-slate-900 mt-2" id="kpi-demand">--</h3>
+                                </div>
+                                <div class="p-2.5 bg-amber-50 rounded-xl text-amber-600"><i
+                                        class="fa-solid fa-gauge-high"></i></div>
+                            </div>
+                        </div>
+                        <div
+                            class="kpi-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        Interruptions</p>
+                                    <h3 class="text-2xl font-extrabold text-slate-900 mt-2" id="kpi-interruption">--
+                                    </h3>
+                                </div>
+                                <div class="p-2.5 bg-rose-50 rounded-xl text-rose-600"><i
+                                        class="fa-solid fa-triangle-exclamation"></i></div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">Monthly Consumption Trend</h3>
+                            <p class="text-xs text-slate-400 mb-4">Total kWh by month (all years)</p>
+                            <div class="relative h-72"><canvas id="consumptionChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">Monthly Avg Electricity Bill</h3>
+                            <p class="text-xs text-slate-400 mb-4">Average ₹ per month</p>
+                            <div class="relative h-72"><canvas id="billChart"></canvas></div>
+                        </div>
+                    </section>
+                    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">Energy Share by Building</h3>
+                            <p class="text-xs text-slate-400 mb-4">Total kWh distribution</p>
+                            <div class="relative h-64 flex justify-center"><canvas id="buildingPieChart"></canvas></div>
+                        </div>
+                        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">Year-over-Year Energy Trend</h3>
+                            <p class="text-xs text-slate-400 mb-4">2021–2025 annual consumption & cost</p>
+                            <div class="relative h-64"><canvas id="yearlyTrendChart"></canvas></div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- ===== BUILDING ANALYSIS ===== -->
+                <div id="section-analysis" class="hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-slate-900">🏢 Building-Wise Analysis</h2>
+                        <select id="building-select" onchange="loadBuildingData()"
+                            class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-medium shadow-sm">
+                            <option value="B1">Building A (B1)</option>
+                            <option value="B2">Building B (B2)</option>
+                            <option value="B3">Building C (B3)</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">Monthly Energy Consumption</h3>
+                            <div class="relative h-72"><canvas id="buildingConsumptionChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">Monthly Electricity Bill</h3>
+                            <div class="relative h-72"><canvas id="buildingBillChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">Voltage (V)</h3>
+                            <div class="relative h-56"><canvas id="bVoltageChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">Current (A)</h3>
+                            <div class="relative h-56"><canvas id="bCurrentChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">Power Factor</h3>
+                            <div class="relative h-56"><canvas id="bPFChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">Max Demand (kW) & Peak Load</h3>
+                            <div class="relative h-64"><canvas id="bDemandChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">All Buildings Comparison</h3>
+                            <div class="relative h-64"><canvas id="allBuildingsCompare"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== TRENDS & IMPACT ===== -->
+                <div id="section-trends" class="hidden space-y-6">
+                    <h2 class="text-xl font-bold text-slate-900">📊 Trends & Impact Analysis</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">🌡️ Temperature Impact</h3>
+                            <p class="text-xs text-slate-400 mb-4">Avg consumption by temperature range</p>
+                            <div class="relative h-72"><canvas id="weatherImpactChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">⚡ Interruption Impact</h3>
+                            <p class="text-xs text-slate-400 mb-4">Avg consumption by outage duration</p>
+                            <div class="relative h-72"><canvas id="interruptImpactChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">🍂 Seasonal Impact</h3>
+                            <p class="text-xs text-slate-400 mb-4">Avg consumption & bill per season</p>
+                            <div class="relative h-72"><canvas id="seasonalChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">📅 Weekday vs Weekend</h3>
+                            <p class="text-xs text-slate-400 mb-4">Average energy & cost comparison</p>
+                            <div class="relative h-72"><canvas id="weekdayChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">🌧️ Rainfall Impact</h3>
+                            <p class="text-xs text-slate-400 mb-4">Energy usage by rainfall level</p>
+                            <div class="relative h-72"><canvas id="rainfallChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                            <h3 class="text-base font-bold text-slate-800 mb-1">🎯 Feature Importance</h3>
+                            <p class="text-xs text-slate-400 mb-4">Top factors driving predictions (XGBoost)</p>
+                            <div class="relative h-72"><canvas id="featureChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== FORECAST ===== -->
+                <div id="section-prediction" class="hidden space-y-6">
+                    <h2 class="text-xl font-bold text-slate-900">🔮 2026 Automated Forecast</h2>
+                    <p class="text-sm text-slate-500 -mt-4">Select a building and month — the system auto-predicts
+                        energy, cost, and year-over-year insights.</p>
+
+                    <!-- Controls -->
+                    <div
+                        class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-end gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Building</label>
+                            <select id="pred-building" onchange="onForecastInputChange()"
+                                class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium">
+                                <option value="B1">Building A</option>
+                                <option value="B2">Building B</option>
+                                <option value="B3">Building C</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Month</label>
+                            <select id="pred-month" onchange="onMonthChange()"
+                                class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium">
+                                <option value="1">January</option>
+                                <option value="2" selected>February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Year</label>
+                            <input type="number" id="pred-year" value="2026" onchange="onForecastInputChange()"
+                                class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium w-28">
+                        </div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="pred-loading" class="hidden text-center py-12">
+                        <div
+                            class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600">
+                        </div>
+                        <p class="mt-4 text-sm text-slate-500 font-medium">Forecasting...</p>
+                    </div>
+
+                    <!-- Single-Month Prediction Cards -->
+                    <div id="pred-summary" class="hidden space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Predicted Energy -->
+                            <div
+                                class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                                <p class="text-indigo-200 text-xs font-semibold uppercase tracking-wider">Predicted
+                                    Energy</p>
+                                <h2 class="text-3xl font-extrabold mt-2" id="sum-energy">--</h2>
+                                <p class="text-indigo-200 text-xs mt-1" id="sum-month-label">Feb 2026</p>
+                                <div class="absolute -bottom-4 -right-4 text-white/10 text-[80px]"><i
+                                        class="fa-solid fa-bolt"></i></div>
+                            </div>
+                            <!-- Predicted Bill -->
+                            <div
+                                class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                                <p class="text-emerald-200 text-xs font-semibold uppercase tracking-wider">Predicted
+                                    Bill</p>
+                                <h2 class="text-3xl font-extrabold mt-2" id="sum-bill">--</h2>
+                                <p class="text-emerald-200 text-xs mt-1">Estimated Cost</p>
+                                <div class="absolute -bottom-4 -right-4 text-white/10 text-[80px]"><i
+                                        class="fa-solid fa-indian-rupee-sign"></i></div>
+                            </div>
+                            <!-- Previous Year Energy -->
+                            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">2025 Actual
+                                    Energy</p>
+                                <h2 class="text-3xl font-extrabold text-slate-800 mt-2" id="sum-prev-energy">--</h2>
+                                <p class="text-xs text-slate-400 mt-1" id="sum-prev-label">Feb 2025</p>
+                            </div>
+                            <!-- Change Indicator -->
+                            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Year-over-Year
+                                    Change</p>
+                                <h2 class="text-3xl font-extrabold mt-2" id="sum-change">--</h2>
+                                <p class="text-xs mt-1" id="sum-change-label">--</p>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Bar Chart (single month) -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 class="text-base font-bold text-slate-800 mb-4">Energy Comparison</h3>
+                                <div class="relative h-64"><canvas id="forecastEnergyChart"></canvas></div>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 class="text-base font-bold text-slate-800 mb-4">Bill Comparison</h3>
+                                <div class="relative h-64"><canvas id="forecastBillChart"></canvas></div>
+                            </div>
+                        </div>
+
+                        <!-- Detail Table (single row) -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100">
+                                <h3 class="text-base font-bold text-slate-800">Prediction Details</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">
+                                                Month</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
+                                                Pred. Energy (kWh)</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
+                                                Pred. Bill (₹)</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
+                                                2025 Energy (kWh)</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
+                                                2025 Bill (₹)</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
+                                                Expected Temp</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">
+                                                Avg Tariff (₹/kWh)</th>
+                                            <th
+                                                class="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase">
+                                                Trend</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pred-table-body" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== BUSINESS INSIGHT (auto-generated) ===== -->
+                    <div id="qa-result" class="hidden space-y-6">
+                        <h3 class="text-lg font-bold text-slate-900">💼 Business Insight — Year-over-Year Comparison
+                        </h3>
+                        <div id="qa-verdict-card" class="rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+                            <div class="relative z-10">
+                                <p class="text-white/80 text-sm font-medium uppercase tracking-wider">Prediction Verdict
+                                </p>
+                                <h2 class="text-3xl lg:text-4xl font-extrabold mt-2" id="qa-verdict-text">--</h2>
+                                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <p class="text-white/60 text-xs">2025 Actual Bill</p>
+                                        <p class="text-lg font-bold" id="qa-ref-bill">--</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs">2026 Predicted Bill</p>
+                                        <p class="text-lg font-bold" id="qa-pred-bill">--</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs">Change</p>
+                                        <p class="text-lg font-bold" id="qa-pct-change">--</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-white/60 text-xs">Expected Temp</p>
+                                        <p class="text-lg font-bold" id="qa-temp">--</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-4 -right-4 text-white/10 text-[100px]"><i
+                                    class="fa-solid fa-scale-balanced"></i></div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                            <h3 class="text-base font-bold text-slate-800 mb-4">🔍 Factors Driving the Change</h3>
+                            <div id="qa-factors" class="space-y-3"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+
+</html>
